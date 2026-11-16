@@ -1,0 +1,538 @@
+/*
+ * AnimatedLedger hero animation (features/landing/components/AnimatedLedger.tsx).
+ * Kept as plain CSS on purpose: an 8s choreography of staggered keyframes and
+ * reduced-motion overrides is clearer here than as utility classes.
+ */
+.ledger-preview {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--color-line-strong);
+  border-radius: 8px;
+  background: var(--color-surface);
+}
+.animated-ledger {
+  min-width: 0;
+  margin-top: 36px;
+}
+.ledger-head {
+  min-height: 70px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-line);
+}
+.ledger-head div {
+  display: flex;
+  flex-direction: column;
+}
+.ledger-head strong {
+  font-size: 14px;
+}
+.ledger-head span {
+  color: var(--color-secondary);
+  font-size: 12px;
+}
+.pause-hint {
+  padding: 3px 7px;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  color: var(--color-secondary);
+  background: var(--color-surface);
+  font-size: 10px !important;
+  font-weight: 500;
+}
+.review-count {
+  position: relative;
+  width: 110px;
+  height: 18px;
+  display: block;
+  overflow: hidden;
+}
+.review-count > span {
+  position: absolute;
+  inset: 0;
+  animation: review-count-old 8s ease-out infinite;
+}
+.review-count > span:last-child {
+  opacity: 0;
+  animation-name: review-count-new;
+}
+.file-arrival {
+  position: absolute;
+  z-index: 4;
+  top: 52px;
+  left: 16px;
+  height: 32px;
+  max-width: calc(100% - 32px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 9px;
+  border: 1px solid var(--color-line-strong);
+  border-radius: 6px;
+  color: #334155;
+  background: var(--color-surface);
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0;
+  transform: translateY(-24px);
+  animation: file-arrival 8s ease-out infinite;
+}
+.file-arrival > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.file-arrival .badge {
+  height: 18px;
+  margin-left: 3px;
+  font-size: 9px;
+}
+.animated-table {
+  overflow: hidden;
+}
+.ledger-grid {
+  display: grid;
+  grid-template-columns: 1fr 0.9fr 1fr 1.12fr 1.18fr;
+  align-items: center;
+}
+.ledger-column-head {
+  height: 36px;
+  color: var(--color-secondary);
+  background: var(--color-canvas);
+  border-bottom: 1px solid var(--color-line);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.ledger-column-head > span,
+.resolving-row > span,
+.settled-row > span,
+.settled-row > strong {
+  min-width: 0;
+  padding: 0 10px;
+}
+.ledger-column-head > span:last-child {
+  text-align: right;
+}
+.resolving-row,
+.settled-row {
+  height: 48px;
+  border-bottom: 1px solid var(--color-line);
+  color: #475569;
+  font-size: 12px;
+}
+.resolving-row {
+  opacity: 0;
+  transform: translateY(-42px);
+  animation: resolving-row-enter 8s ease-out infinite;
+}
+.settled-row {
+  transform: translateY(-48px);
+  animation: settled-row-push 8s ease-out infinite;
+}
+.settled-row strong {
+  overflow: hidden;
+  color: var(--color-text);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bottom-row {
+  animation:
+    settled-row-push 8s ease-out infinite,
+    bottom-row-exit 8s ease-out infinite;
+}
+.resolving-cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  min-height: 26px;
+}
+.resolving-cell > strong,
+.resolving-cell > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(4px);
+  animation: field-resolve 8s ease-out infinite;
+}
+.resolving-cell > strong {
+  color: var(--color-text);
+}
+.field-date > span {
+  animation-delay: 240ms;
+}
+.field-category > span {
+  animation-delay: 480ms;
+}
+.field-amount > span {
+  margin-left: auto;
+  animation-delay: 720ms;
+}
+.skeleton-bar {
+  position: absolute;
+  left: 10px;
+  width: calc(100% - 20px);
+  height: 9px;
+  border-radius: 3px;
+  background: var(--color-line);
+  opacity: 0;
+  animation: ledger-skeleton 8s ease-out infinite;
+}
+.field-vendor .skeleton-bar {
+  left: 0;
+  width: calc(100% - 10px);
+}
+.field-amount .skeleton-bar {
+  right: 10px;
+  left: auto;
+  width: calc(100% - 20px);
+}
+.animated-status {
+  position: relative;
+  height: 24px;
+  display: flex;
+  align-items: center;
+}
+.animated-status .badge {
+  position: absolute;
+  left: 10px;
+  opacity: 0;
+  transform: translateY(4px);
+  animation: status-review 8s ease-out infinite;
+}
+.animated-status .badge-success {
+  animation-name: status-categorized;
+}
+.animated-status .badge-success svg {
+  transform: scale(0);
+  animation: status-check 8s ease-out infinite;
+}
+.animated-total {
+  position: relative;
+  width: 114px;
+  height: 20px;
+  display: block;
+  overflow: hidden;
+}
+.animated-total > span {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  animation: total-step-0 8s ease-out infinite;
+}
+.animated-total > .total-step-1 {
+  animation-name: total-step-1;
+}
+.animated-total > .total-step-2 {
+  animation-name: total-step-2;
+}
+.animated-total > .total-step-3 {
+  animation-name: total-step-3;
+}
+.animated-ledger.is-paused *,
+.animated-ledger.is-paused *::before,
+.animated-ledger.is-paused *::after {
+  animation-play-state: paused !important;
+}
+.animated-ledger.reduce-motion * {
+  animation: none !important;
+}
+.animated-ledger.reduce-motion .file-arrival,
+.animated-ledger.reduce-motion .skeleton-bar,
+.animated-ledger.reduce-motion .review-count > span:first-child,
+.animated-ledger.reduce-motion .animated-status .badge-warning,
+.animated-ledger.reduce-motion .animated-total > span {
+  opacity: 0;
+}
+.animated-ledger.reduce-motion .resolving-row,
+.animated-ledger.reduce-motion .settled-row,
+.animated-ledger.reduce-motion .resolving-cell > strong,
+.animated-ledger.reduce-motion .resolving-cell > span,
+.animated-ledger.reduce-motion .review-count > span:last-child,
+.animated-ledger.reduce-motion .animated-status .badge-success,
+.animated-ledger.reduce-motion .animated-total > span:last-child {
+  opacity: 1;
+  transform: none;
+}
+.animated-ledger.reduce-motion .bottom-row {
+  opacity: 1;
+}
+.animated-ledger.reduce-motion .animated-status .badge-success svg {
+  transform: scale(1);
+}
+
+@keyframes file-arrival {
+  0% {
+    opacity: 0;
+    transform: translateY(-24px);
+  }
+  3% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  13%,
+  100% {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+}
+@keyframes resolving-row-enter {
+  0%,
+  3% {
+    opacity: 0;
+    transform: translateY(-42px);
+  }
+  7%,
+  92% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  96%,
+  100% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+}
+@keyframes settled-row-push {
+  0%,
+  3% {
+    transform: translateY(-48px);
+  }
+  7%,
+  92% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+@keyframes bottom-row-exit {
+  0%,
+  76% {
+    opacity: 1;
+  }
+  81%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes ledger-skeleton {
+  0%,
+  5% {
+    opacity: 0;
+  }
+  7% {
+    opacity: 0.55;
+  }
+  10% {
+    opacity: 1;
+  }
+  13%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes field-resolve {
+  0%,
+  12% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  15%,
+  92% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+}
+@keyframes status-review {
+  0%,
+  23% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  26%,
+  33% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  36%,
+  100% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+}
+@keyframes status-categorized {
+  0%,
+  33% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  36%,
+  92% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+}
+@keyframes status-check {
+  0%,
+  35% {
+    transform: scale(0);
+  }
+  38%,
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes review-count-old {
+  0%,
+  38% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  41%,
+  100% {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+@keyframes review-count-new {
+  0%,
+  38% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  41%,
+  92% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+}
+@keyframes total-step-0 {
+  0%,
+  38% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  40%,
+  100% {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+@keyframes total-step-1 {
+  0%,
+  38% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  40%,
+  42% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  44%,
+  100% {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+@keyframes total-step-2 {
+  0%,
+  42% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  44%,
+  46% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  48%,
+  100% {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+@keyframes total-step-3 {
+  0%,
+  46% {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  48%,
+  92% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+}
+
+.ledger-total {
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 32px;
+  padding: 0 16px;
+  background: var(--color-canvas);
+  font-size: 13px;
+}
+.ledger-total span {
+  color: var(--color-secondary);
+}
+.ledger-total strong {
+  font-size: 14px;
+}
+
+@media (max-width: 900px) {
+  .ledger-preview {
+    max-width: 640px;
+  }
+  .animated-ledger {
+    margin-top: 0;
+  }
+}
+
+/* Narrow screens: drop the Date column so the 4 remaining columns stay legible */
+@media (max-width: 640px) {
+  .ledger-grid {
+    grid-template-columns: 1fr 1fr 1.1fr 1.2fr;
+  }
+  .ledger-grid > :nth-child(2) {
+    display: none;
+  }
+  .ledger-preview {
+    margin: 0 -4px;
+  }
+}
+
+.ledger-preview .money {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

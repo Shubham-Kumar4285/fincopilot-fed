@@ -1,0 +1,52 @@
+@import "tailwindcss";
+@import "./ledger.css";
+
+/* Design tokens: use as Tailwind classes (bg-canvas, text-secondary, border-line, rounded-control). */
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-canvas: #f8fafc;
+  --color-surface: #ffffff;
+  --color-muted: #f1f5f9;
+  --color-line: #e2e8f0;
+  --color-line-strong: #cbd5e1;
+  --color-text: #0f172a;
+  --color-secondary: #64748b;
+  --color-accent: #059669;
+  --color-accent-hover: #047857;
+  --color-danger: #dc2626;
+  --color-danger-hover: #b91c1c;
+  --color-warning: #d97706;
+
+  --radius-control: 6px;
+  --radius-card: 8px;
+
+  --animate-spin-fast: spin 900ms linear infinite;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-line);
+  }
+  html {
+    @apply font-sans text-text bg-canvas;
+  }
+  body {
+    @apply min-h-screen min-w-[320px] text-sm/normal;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-semibold tracking-tight;
+  }
+  button {
+    @apply cursor-pointer;
+  }
+  :is(button, a, input, select):focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--color-accent) 40%, transparent);
+    outline-offset: 2px;
+  }
+  :is(button, a, input, select) {
+    transition: color 140ms ease, background 140ms ease, border-color 140ms ease, opacity 140ms ease;
+  }
+}
