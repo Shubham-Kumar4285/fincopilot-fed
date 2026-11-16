@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { SubmitEvent } from "react";
 import { Link } from "react-router-dom";
 
-import { PATHS } from "@/app/paths";
+import { PATHS, withNext } from "@/shared/config/paths";
 import { fieldErrors, getErrorMessage } from "@/shared/api/errors";
 import { zodFieldErrors } from "@/shared/lib/form";
 import { Alert } from "@/shared/ui/Alert";
@@ -23,9 +23,10 @@ interface SignupFormProps {
   onSuccess: () => void;
   /** Pre-fills and locks the email, e.g. when signing up from an invite link. */
   lockedEmail?: string;
+  nextParam?: string | null;
 }
 
-export function SignupForm({ onSuccess, lockedEmail }: SignupFormProps) {
+export function SignupForm({ onSuccess, lockedEmail, nextParam }: SignupFormProps) {
   const [values, setValues] = useState<SignupInput>({ fullName: "", email: lockedEmail ?? "", password: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const mutation = useSignupMutation();
@@ -106,7 +107,7 @@ export function SignupForm({ onSuccess, lockedEmail }: SignupFormProps) {
         </Button>
       </form>
       <AuthSwitch>
-        Have an account? <Link to={PATHS.login}>Log in</Link>
+        Have an account? <Link to={withNext(PATHS.login, nextParam)}>Log in</Link>
       </AuthSwitch>
     </>
   );

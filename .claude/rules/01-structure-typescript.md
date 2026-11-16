@@ -11,7 +11,9 @@ paths:
 - `src/features/<feature>/` is flat: `api.ts` (requests, query keys, hooks), `schemas.ts` (Zod), `pages/`, `components/`, `index.ts`. Add `hooks/` or split `api.ts` into `api/` only once the feature passes ~10 files. Feature names MUST match backend module names.
 - `src/shared/`: feature-agnostic code (`api/`, `ui/`, `hooks/`, `lib/`, `config/`). Shared components that need an app path take it as a prop (e.g. `<Wordmark to={PATHS.landing} />`). Code that knows a business concept (invoice, org) MUST NOT live in `shared/`.
 - Code moves to `shared/` only when a second feature needs it, in the same change.
-- Cross-feature imports MUST go through the other feature's `index.ts`. No other barrel files are allowed.
+- Cross-feature imports MUST go through the other feature's `index.ts`, which exports hooks, keys, types and the few components other features or `app/` embed (e.g. `OrgSwitcher`), never pages. No other barrel files are allowed.
+- `app/router.tsx` is the only place that imports page modules (`@/features/x/pages/XPage`), lazily, so every page stays out of the entry chunk.
+- Dependency direction is enforced by ESLint: `features/` cannot import `app/`; `shared/` cannot import either. App-wide constants (`PATHS`) live in `shared/config/`.
 - Inside a feature, imports MUST be relative; across boundaries they MUST use `@/`.
 
 ## Naming

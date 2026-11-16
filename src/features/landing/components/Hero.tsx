@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 
-import { PATHS } from "@/app/paths";
+import { PATHS } from "@/shared/config/paths";
 import { Button } from "@/shared/ui/Button";
 import { buttonClasses } from "@/shared/ui/button-classes";
 

@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { SubmitEvent } from "react";
 import { Link } from "react-router-dom";
 
-import { PATHS } from "@/app/paths";
+import { PATHS } from "@/shared/config/paths";
 import { getErrorMessage } from "@/shared/api/errors";
 import { zodFieldErrors } from "@/shared/lib/form";
 import { Alert } from "@/shared/ui/Alert";

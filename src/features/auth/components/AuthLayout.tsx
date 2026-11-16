@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 
-import { PATHS } from "@/app/paths";
 import { Wordmark } from "@/shared/ui/Wordmark";
 
 interface AuthLayoutProps {
@@ -13,7 +12,7 @@ export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
   return (
     <div className="min-h-screen bg-white sm:grid sm:grid-cols-2">
       <aside className="flex h-[132px] flex-col justify-between border-b border-line bg-muted px-5 py-[22px] sm:h-auto sm:border-r sm:border-b-0 sm:px-12 sm:py-10">
-        <Wordmark to={PATHS.landing} />
+        <Wordmark />
         <p className="max-w-[340px] text-[13px]/[1.45] tracking-tight text-slate-600 sm:max-w-[410px] sm:text-xl/normal">
           Built for freelancers who would rather be doing the work than the bookkeeping.
         </p>

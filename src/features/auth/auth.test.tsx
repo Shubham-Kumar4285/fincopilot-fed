@@ -9,6 +9,7 @@ import { renderWithProviders } from "@/test/render";
 
 import { ForgotPasswordForm } from "./components/ForgotPasswordForm";
 import { LoginForm } from "./components/LoginForm";
+import { ResetPasswordForm } from "./components/ResetPasswordForm";
 import { SignupForm } from "./components/SignupForm";
 
 describe("LoginForm", () => {
@@ -104,5 +105,40 @@ describe("ForgotPasswordForm", () => {
     await userEvent.click(screen.getByRole("button", { name: "Send reset link" }));
 
     expect(await screen.findByRole("heading", { name: "Check your inbox" })).toBeInTheDocument();
+  });
+});
+
+describe("ResetPasswordForm", () => {
+  it("shows the invalid-link state without a token", () => {
+    renderWithProviders(<ResetPasswordForm token={null} />);
+    expect(screen.getByRole("heading", { name: "This link doesn't work" })).toBeInTheDocument();
+  });
+
+  it("requires both passwords to match", async () => {
+    renderWithProviders(<ResetPasswordForm token="t" />);
+
+    await userEvent.type(screen.getByLabelText("New password"), "abcdefgh");
+    await userEvent.type(screen.getByLabelText("Confirm new password"), "abcdefgX");
+    await userEvent.click(screen.getByRole("button", { name: "Update password" }));
+
+    expect(screen.getByText("Passwords don't match.")).toBeInTheDocument();
+  });
+
+  it("resets the password", async () => {
+    let sent: unknown;
+    server.use(
+      http.post(`${API}/auth/password/reset`, async ({ request }) => {
+        sent = await request.json();
+        return HttpResponse.json({ message: "Password has been reset successfully" });
+      }),
+    );
+    renderWithProviders(<ResetPasswordForm token="t" />);
+
+    await userEvent.type(screen.getByLabelText("New password"), "abcdefgh");
+    await userEvent.type(screen.getByLabelText("Confirm new password"), "abcdefgh");
+    await userEvent.click(screen.getByRole("button", { name: "Update password" }));
+
+    expect(await screen.findByRole("heading", { name: "Password updated" })).toBeInTheDocument();
+    expect(sent).toEqual({ token: "t", new_password: "abcdefgh" });
   });
 });

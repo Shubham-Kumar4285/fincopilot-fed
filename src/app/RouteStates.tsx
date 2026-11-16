@@ -1,7 +1,7 @@
 import { LoaderCircle } from "lucide-react";
 import { isRouteErrorResponse, useRouteError } from "react-router-dom";
 
-import { PATHS } from "./paths";
+import { PATHS } from "@/shared/config/paths";
 
 /** Suspense / loading fallback for lazy routes. */
 export function RouteFallback() {

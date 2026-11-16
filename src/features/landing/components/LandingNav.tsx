@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 
-import { PATHS } from "@/app/paths";
+import { PATHS } from "@/shared/config/paths";
 import { buttonClasses } from "@/shared/ui/button-classes";
 import { Wordmark } from "@/shared/ui/Wordmark";
 
@@ -14,7 +14,7 @@ export function LandingNav() {
   return (
     <header className="sticky top-0 z-20 h-[58px] border-b border-line bg-surface sm:h-16">
       <div className="mx-auto flex h-full max-w-[1120px] items-center px-4 sm:px-6">
-        <Wordmark to={PATHS.landing} />
+        <Wordmark />
         <nav className="ml-14 hidden gap-7 sm:flex" aria-label="Primary">
           {NAV_LINKS.map((link) => (
             <a

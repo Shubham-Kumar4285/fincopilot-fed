@@ -26,6 +26,20 @@ export type SignupInput = z.infer<typeof signupSchema>;
 export const forgotPasswordSchema = z.object({ email });
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 
+export const resetPasswordSchema = z
+  .object({
+    password: z
+      .string()
+      .min(PASSWORD_MIN_LENGTH, `Use at least ${PASSWORD_MIN_LENGTH} characters.`)
+      .max(PASSWORD_MAX_LENGTH, "Password is too long."),
+    confirmPassword: z.string(),
+  })
+  .refine((values) => values.password === values.confirmPassword, {
+    message: "Passwords don't match.",
+    path: ["confirmPassword"],
+  });
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+
 /** Responses that drive the session are validated before use. */
 export const tokenResponseSchema = z.object({
   access_token: z.string().min(1),

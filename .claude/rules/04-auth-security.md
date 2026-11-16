@@ -12,6 +12,7 @@ paths:
 ## Session (source: `../backend/.claude/rules/06-auth-multitenancy.md`)
 - The access token is held only in `tokenStore` (memory). On load, the session is restored with `POST /auth/refresh` (httpOnly cookie) before guarded routes render.
 - Code MUST NOT read or log the refresh cookie, or persist tokens anywhere.
+- The active workspace id (not a secret; the backend checks membership on every request) is the only auth-adjacent value in `localStorage` (`features/organizations/active-org.ts`). Logout and session expiry clear it.
 - Logout MUST, in order:
   1. Call `POST /auth/logout`.
   2. `tokenStore.clear()`.

@@ -3,14 +3,19 @@ import { render } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { MemoryRouter } from "react-router-dom";
 
-/** Render with a fresh QueryClient (no retries) and a router. */
+import { ToastProvider } from "@/shared/ui/ToastProvider";
+
+export function createTestQueryClient() {
+  return new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+}
+
+/** Render with a fresh QueryClient (no retries), toasts and a router. */
 export function renderWithProviders(ui: ReactElement, { route = "/" } = {}) {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
-  });
   return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
+    <QueryClientProvider client={createTestQueryClient()}>
+      <ToastProvider>
+        <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
+      </ToastProvider>
     </QueryClientProvider>,
   );
 }

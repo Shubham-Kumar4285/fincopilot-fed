@@ -1,18 +1,17 @@
 import { Link } from "react-router-dom";
 
+import { PATHS } from "@/shared/config/paths";
 import { cn } from "@/shared/lib/cn";
 
 interface WordmarkProps {
-  /** Home path; passed in because shared/ must not import app/paths. */
-  to: string;
   /** Light-on-dark version for the footer. */
   inverted?: boolean;
 }
 
-export function Wordmark({ to, inverted = false }: WordmarkProps) {
+export function Wordmark({ inverted = false }: WordmarkProps) {
   return (
     <Link
-      to={to}
+      to={PATHS.landing}
       className={cn(
         "inline-flex items-center gap-2 text-base font-semibold tracking-tight",
         inverted ? "text-white" : "text-text",

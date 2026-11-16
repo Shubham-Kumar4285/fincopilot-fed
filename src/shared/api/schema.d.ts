@@ -177,11 +177,51 @@ export interface paths {
         };
         /**
          * Get My Invites
-         * @description List organization invites for the current user
+         * @description Pending (not accepted, declined or expired) organization invites for the current user
          */
         get: operations["get_my_invites_v1_users_me_invites_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/users/me/invites/{invite_id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept My Invite
+         * @description Join the organization from inside the app; the invite must be addressed to the current user's email
+         */
+        post: operations["accept_my_invite_v1_users_me_invites__invite_id__accept_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/users/me/invites/{invite_id}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Decline My Invite
+         * @description Decline an invite addressed to the current user's email
+         */
+        post: operations["decline_my_invite_v1_users_me_invites__invite_id__decline_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -195,7 +235,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List My Organizations */
+        /**
+         * List My Organizations
+         * @description Every organization the current user belongs to, with their role, oldest membership first
+         */
         get: operations["list_my_organizations_v1_orgs_get"];
         put?: never;
         /**
@@ -282,7 +325,7 @@ export interface paths {
         };
         /**
          * List Pending Invites
-         * @description Get all pending invitations for the current organization
+         * @description Pending invitations for the current organization, plus ones declined in the last 7 days (declined_at set)
          */
         get: operations["list_pending_invites_v1_orgs_current_invites_get"];
         put?: never;
@@ -448,6 +491,48 @@ export interface components {
             message: string;
         };
         /**
+         * MyInviteResponse
+         * @description A pending invite addressed to the signed-in user (no token: accept by id).
+         */
+        MyInviteResponse: {
+            /**
+             * Id
+             * Format: uuid
+             * @description Invite ID
+             */
+            id: string;
+            /**
+             * Org Id
+             * Format: uuid
+             * @description Organization ID
+             */
+            org_id: string;
+            /**
+             * Org Name
+             * @description Organization name
+             */
+            org_name: string;
+            /** @description Role to be assigned */
+            role: components["schemas"]["OrgMemberRole"];
+            /**
+             * Invited By Name
+             * @description Name of the person who sent the invite
+             */
+            invited_by_name?: string | null;
+            /**
+             * Expires At
+             * Format: date-time
+             * @description Expiration timestamp
+             */
+            expires_at: string;
+            /**
+             * Created At
+             * Format: date-time
+             * @description Creation timestamp
+             */
+            created_at: string;
+        };
+        /**
          * OAuthGoogleRequest
          * @description Request schema for Google OAuth login.
          */
@@ -570,6 +655,11 @@ export interface components {
              * @description Acceptance timestamp
              */
             accepted_at?: string | null;
+            /**
+             * Declined At
+             * @description When the invitee declined (shown to admins for 7 days)
+             */
+            declined_at?: string | null;
             /**
              * Created At
              * Format: date-time
@@ -734,6 +824,55 @@ export interface components {
              * @description ISO 4217 currency code
              */
             base_currency?: string | null;
+        };
+        /**
+         * OrganizationWithRoleResponse
+         * @description An organization the caller belongs to, with the caller's role in it.
+         */
+        OrganizationWithRoleResponse: {
+            /**
+             * Name
+             * @description Organization name
+             */
+            name: string;
+            /**
+             * Country
+             * @description ISO 3166-1 alpha-2 country code
+             */
+            country?: string | null;
+            /**
+             * Base Currency
+             * @description ISO 4217 currency code
+             * @default USD
+             */
+            base_currency: string;
+            /**
+             * Id
+             * Format: uuid
+             * @description Organization ID
+             */
+            id: string;
+            /** @description Current subscription tier */
+            plan_tier: components["schemas"]["PlanTier"];
+            /**
+             * Created At
+             * Format: date-time
+             * @description Creation timestamp
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             * @description Last update timestamp
+             */
+            updated_at: string;
+            /**
+             * Member Count
+             * @description Number of members (if included)
+             */
+            member_count?: number | null;
+            /** @description The caller's role in this organization */
+            role: components["schemas"]["OrgMemberRole"];
         };
         /**
          * PasswordForgotRequest
@@ -1242,7 +1381,67 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["OrgInviteResponse"][];
+                    "application/json": components["schemas"]["MyInviteResponse"][];
+                };
+            };
+        };
+    };
+    accept_my_invite_v1_users_me_invites__invite_id__accept_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invite_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrgInviteAcceptResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    decline_my_invite_v1_users_me_invites__invite_id__decline_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invite_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -1262,7 +1461,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["OrganizationResponse"][];
+                    "application/json": components["schemas"]["OrganizationWithRoleResponse"][];
                 };
             };
         };
@@ -1303,7 +1502,9 @@ export interface operations {
     get_current_organization_v1_orgs_current_get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-Org-Id"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -1318,12 +1519,23 @@ export interface operations {
                     "application/json": components["schemas"]["OrganizationResponse"];
                 };
             };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
     };
     update_organization_v1_orgs_current_patch: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-Org-Id"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -1356,7 +1568,9 @@ export interface operations {
     list_organization_members_v1_orgs_current_members_get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-Org-Id"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -1371,12 +1585,23 @@ export interface operations {
                     "application/json": components["schemas"]["OrgMemberListResponse"];
                 };
             };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
     };
     remove_organization_member_v1_orgs_current_members__user_id__delete: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-Org-Id"?: string | null;
+            };
             path: {
                 user_id: string;
             };
@@ -1405,7 +1630,9 @@ export interface operations {
     list_pending_invites_v1_orgs_current_invites_get: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-Org-Id"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -1420,12 +1647,23 @@ export interface operations {
                     "application/json": components["schemas"]["OrgInviteResponse"][];
                 };
             };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
     };
     create_organization_invite_v1_orgs_current_invites_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-Org-Id"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };

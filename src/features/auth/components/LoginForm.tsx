@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { SubmitEvent } from "react";
 import { Link } from "react-router-dom";
 
-import { PATHS } from "@/app/paths";
+import { PATHS, withNext } from "@/shared/config/paths";
 import { fieldErrors, getErrorMessage } from "@/shared/api/errors";
 import { zodFieldErrors } from "@/shared/lib/form";
 import { Alert } from "@/shared/ui/Alert";
@@ -15,7 +15,13 @@ import { loginSchema } from "../schemas";
 import type { LoginInput } from "../schemas";
 import { AuthSwitch } from "./AuthLayout";
 
-export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
+interface LoginFormProps {
+  onSuccess: () => void;
+  /** Preserved on the sign-up link so invite flows survive switching forms. */
+  nextParam?: string | null;
+}
+
+export function LoginForm({ onSuccess, nextParam }: LoginFormProps) {
   const [values, setValues] = useState<LoginInput>({ email: "", password: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const mutation = useLoginMutation();
@@ -80,7 +86,7 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
         </Button>
       </form>
       <AuthSwitch>
-        No account? <Link to={PATHS.signup}>Sign up</Link>
+        No account? <Link to={withNext(PATHS.signup, nextParam)}>Sign up</Link>
       </AuthSwitch>
     </>
   );

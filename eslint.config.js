@@ -43,7 +43,12 @@ export default defineConfig([
     rules: {
       "no-restricted-imports": [
         "error",
-        { patterns: [{ group: ["@/features/*/*"], message: "Import other features via their index.ts only." }] },
+        {
+          patterns: [
+            { group: ["@/features/*/*"], message: "Import other features via their index.ts only." },
+            { group: ["@/app/*"], message: "features/ must not import app/ (dependency flows app → features → shared)." },
+          ],
+        },
       ],
     },
   },

@@ -32,9 +32,9 @@ paths:
 
 ## Server state (TanStack Query)
 - Each feature `api.ts` contains, in order: request functions, key factory, thin `useQuery` / `useMutation` hooks. Request bodies are typed `Schema<"XRequest">` from `@/shared/api/types`.
-- Query keys MUST come from factories. Tenant data keys MUST include `orgId`.
+- Query keys MUST come from factories. The active workspace is sent as `X-Org-Id` by the client, not put in keys; only `auth` and `users` keys are user-scoped, every other root is treated as workspace data.
 - Data fetching in `useEffect` is forbidden.
-- Mutations MUST invalidate or update exactly the keys they affect. Org switch and logout MUST call `queryClient.clear()`.
+- Mutations MUST invalidate or update exactly the keys they affect. Logout MUST call `queryClient.clear()`. Org switch MUST go through `useSwitchOrg`, which resets every workspace (non-`auth`/`users`) query.
 - Independent queries MUST run in parallel. Route data is prefetched in loaders (`queryClient.ensureQueryData`), not fetched by nested components in sequence.
 - QueryClient defaults: `staleTime` ≥ 30s, no retry on 4xx. Per-query overrides need a comment.
 
