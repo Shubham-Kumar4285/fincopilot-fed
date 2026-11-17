@@ -4,7 +4,7 @@ import { Navigate, Outlet, useLocation, useSearchParams } from "react-router-dom
 
 import { useSessionQuery } from "@/features/auth";
 import { clearActiveOrg, getActiveOrg, useCurrentOrgQuery } from "@/features/organizations";
-import { ApiError } from "@/shared/api/errors";
+import { ApiError, getErrorMessage } from "@/shared/api/errors";
 import { PATHS, safeNextPath, withNext } from "@/shared/config/paths";
 import { StateMessage } from "@/shared/ui/StateMessage";
 
@@ -16,6 +16,18 @@ export function RequireAuth() {
   const location = useLocation();
 
   if (session.isPending) return <RouteFallback />;
+  if (session.isError) {
+    // The server couldn't answer (offline, rate limited): the session may still be fine, so don't log out.
+    return (
+      <StateMessage
+        icon={<AlertCircle size={20} />}
+        title="We couldn't restore your session"
+        description={getErrorMessage(session.error)}
+        actionLabel="Try again"
+        onAction={() => void session.refetch()}
+      />
+    );
+  }
   if (!session.data) return <Navigate to={withNext(PATHS.login, location.pathname + location.search)} replace />;
   return <Outlet />;
 }

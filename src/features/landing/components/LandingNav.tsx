@@ -6,7 +6,6 @@ import { Wordmark } from "@/shared/ui/Wordmark";
 
 const NAV_LINKS = [
   { label: "Product", href: "#product" },
-  { label: "Pricing", href: "#pricing" },
   { label: "Security", href: "#security" },
 ] as const;
 

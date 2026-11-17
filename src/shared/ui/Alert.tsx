@@ -6,9 +6,9 @@ import { cn } from "@/shared/lib/cn";
 type AlertTone = "error" | "success" | "warning";
 
 const TONES = {
-  error: { Icon: AlertCircle, className: "border-red-200 bg-red-50 text-red-800" },
-  success: { Icon: Check, className: "border-emerald-200 bg-emerald-50 text-emerald-800" },
-  warning: { Icon: TriangleAlert, className: "border-amber-200 bg-amber-50 text-amber-800" },
+  error: { Icon: AlertCircle, className: "border-danger-line bg-danger-soft text-danger-text" },
+  success: { Icon: Check, className: "border-success-line bg-success-soft text-success-text" },
+  warning: { Icon: TriangleAlert, className: "border-warning-line bg-warning-soft text-warning-text" },
 } as const;
 
 interface AlertProps {

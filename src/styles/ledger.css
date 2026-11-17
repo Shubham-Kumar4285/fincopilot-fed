@@ -5,6 +5,7 @@
  */
 .ledger-preview {
   position: relative;
+  margin: 0;
   overflow: hidden;
   border: 1px solid var(--color-line-strong);
   border-radius: 8px;
@@ -34,13 +35,21 @@
   font-size: 12px;
 }
 .pause-hint {
-  padding: 3px 7px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 24px;
+  padding: 3px 9px;
   border: 1px solid var(--color-line);
   border-radius: 999px;
   color: var(--color-secondary);
   background: var(--color-surface);
-  font-size: 10px !important;
+  font-size: 11px;
   font-weight: 500;
+}
+.pause-hint:hover {
+  color: var(--color-text);
+  border-color: var(--color-line-strong);
 }
 .review-count {
   position: relative;
@@ -71,7 +80,7 @@
   padding: 0 9px;
   border: 1px solid var(--color-line-strong);
   border-radius: 6px;
-  color: #334155;
+  color: var(--color-text);
   background: var(--color-surface);
   font-size: 11px;
   font-weight: 500;
@@ -121,7 +130,7 @@
 .settled-row {
   height: 48px;
   border-bottom: 1px solid var(--color-line);
-  color: #475569;
+  color: var(--color-secondary);
   font-size: 12px;
 }
 .resolving-row {
@@ -509,7 +518,7 @@
   font-size: 14px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1023px) {
   .ledger-preview {
     max-width: 640px;
   }

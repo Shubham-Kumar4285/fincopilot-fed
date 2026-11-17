@@ -13,17 +13,23 @@ export function Footer() {
         {footerColumns.map((column) => (
           <div key={column.heading} className="flex flex-col items-start gap-2.5">
             <strong className="text-xs text-white">{column.heading}</strong>
-            {column.links.map((label) => (
-              // Plain text until these pages exist; dead links are worse than no links.
-              <span key={label} className="text-xs text-slate-400">
-                {label}
-              </span>
-            ))}
+            {column.links.map((label) =>
+              label === "Security" ? (
+                <a key={label} href="#security" className="text-xs text-slate-300 underline-offset-4 hover:text-white hover:underline">
+                  {label}
+                </a>
+              ) : (
+                // Plain text until these pages exist; dead links are worse than no links.
+                <span key={label} className="text-xs text-slate-400">
+                  {label}
+                </span>
+              ),
+            )}
           </div>
         ))}
       </div>
-      <div className="mx-auto mt-12 max-w-[1120px] border-t border-slate-700 pt-5 text-[11px] text-slate-500">
-        © {new Date().getFullYear()} FinCopilot Technologies Private Limited. All rights reserved.
+      <div className="mx-auto mt-12 max-w-[1120px] border-t border-slate-700 pt-5 text-xs text-slate-400">
+        © {new Date().getFullYear()} FinCopilot. All rights reserved.
       </div>
     </footer>
   );

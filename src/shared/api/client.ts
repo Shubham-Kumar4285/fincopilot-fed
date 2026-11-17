@@ -59,21 +59,25 @@ async function send(method: Method, path: string, body: unknown, opts: RequestOp
   }
 }
 
-/** Single-flight refresh: concurrent 401s share one request. Resolves to whether it succeeded. */
+/**
+ * Single-flight refresh: concurrent 401s share one request.
+ * Resolves `true` (new token) or `false` (refresh cookie rejected: the session is over).
+ * Throws ApiError when the server couldn't answer (offline, 429 rate limit, 5xx): the session
+ * may still be valid, so callers must not log the user out for that.
+ */
 export function refreshSession(): Promise<boolean> {
   refreshPromise ??= (async () => {
     try {
       const response = await send("POST", "/auth/refresh", undefined, { skipAuth: true });
-      if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
         tokenStore.clear();
         return false;
       }
+      if (!response.ok) throw await parseErrorResponse(response);
       const data = (await response.json()) as { access_token?: unknown };
       if (typeof data.access_token !== "string") return false;
       tokenStore.set(data.access_token);
       return true;
-    } catch {
-      return false;
     } finally {
       refreshPromise = null;
     }

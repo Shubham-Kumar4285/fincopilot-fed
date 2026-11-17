@@ -1,7 +1,7 @@
 import { cn } from "@/shared/lib/cn";
 import { initials } from "@/shared/lib/initials";
 
-const SIZES = { sm: "size-7 text-[10px]", md: "size-8 text-[11px]", lg: "size-11 text-sm" } as const;
+const SIZES = { sm: "size-7 text-[11px]", md: "size-8 text-[11px]", lg: "size-11 text-sm" } as const;
 
 export function Avatar({ name, size = "md" }: { name: string; size?: keyof typeof SIZES }) {
   return (

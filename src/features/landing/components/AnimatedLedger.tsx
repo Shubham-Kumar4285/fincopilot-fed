@@ -1,60 +1,72 @@
-import { Check, FileText } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Check, FileText, Pause, Play } from "lucide-react";
+import type { AnimationEvent } from "react";
+import { useState } from "react";
 
 import { Badge } from "@/shared/ui/Badge";
 import { useReducedMotion } from "@/shared/hooks/use-reduced-motion";
 
-import { LEDGER_CYCLE_MS, ledgerDocuments, settledLedgerRows } from "../data";
+import { ledgerDocuments, settledLedgerRows } from "../data";
 
 /**
  * Hero demo: a document is "read" and categorized, then the next one rotates in.
- * All motion is CSS (see styles/ledger.css, 8s keyframes). React only swaps the document
- * every cycle; changing `key` remounts the rows so the keyframes restart in sync.
+ * All motion is CSS (see styles/ledger.css, 8s keyframes). The CSS cycle itself drives the swap:
+ * when the row's keyframes loop, React advances the document and the `key` remount restarts every
+ * keyframe together. Pausing the CSS therefore pauses the rotation too, so they can't drift.
  */
 export function AnimatedLedger() {
   const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
+  // Hover pauses for a pointer; the button pauses for keyboard and touch (WCAG 2.2.2).
+  const [hovered, setHovered] = useState(false);
+  const [stopped, setStopped] = useState(false);
+  const paused = hovered || stopped;
   const reduceMotion = useReducedMotion();
   const doc = ledgerDocuments[index % ledgerDocuments.length] ?? ledgerDocuments[0];
 
-  useEffect(() => {
-    if (paused || reduceMotion) return;
-    const timer = window.setInterval(
-      () => { setIndex((current) => (current + 1) % ledgerDocuments.length); },
-      LEDGER_CYCLE_MS,
-    );
-    return () => { window.clearInterval(timer); };
-  }, [paused, reduceMotion]);
+  const handleAnimationIteration = (event: AnimationEvent) => {
+    if (event.animationName !== "resolving-row-enter") return;
+    setIndex((current) => (current + 1) % ledgerDocuments.length);
+  };
 
   const className = ["ledger-preview", "animated-ledger", paused && "is-paused", reduceMotion && "reduce-motion"]
     .filter(Boolean)
     .join(" ");
 
   return (
-    <div
+    <figure
       className={className}
-      onMouseEnter={() => { setPaused(true); }}
-      onMouseLeave={() => { setPaused(false); }}
-      aria-label="Example of documents being read and categorized"
+      onMouseEnter={() => { setHovered(true); }}
+      onMouseLeave={() => { setHovered(false); }}
+      onAnimationIteration={handleAnimationIteration}
+      aria-label="Example: an uploaded receipt is read, categorized and added to the month's ledger"
     >
       <div className="ledger-head">
-        <div>
+        <div aria-hidden>
           <strong>March documents</strong>
           <span className="review-count">
             <span>5 of 12 reviewed</span>
             <span>6 of 12 reviewed</span>
           </span>
         </div>
-        <span className="pause-hint">{paused ? "Paused" : "Hover to pause"}</span>
+        {!reduceMotion && (
+          <button
+            type="button"
+            className="pause-hint"
+            aria-pressed={stopped}
+            onClick={() => { setStopped((current) => !current); }}
+          >
+            {stopped ? <Play size={11} aria-hidden /> : <Pause size={11} aria-hidden />}
+            {stopped ? "Play" : paused ? "Paused" : "Pause"}
+          </button>
+        )}
       </div>
 
-      <div className="file-arrival" key={`file-${index}`}>
+      <div className="file-arrival" key={`file-${index}`} aria-hidden>
         <FileText size={14} />
         <span>{doc.file}</span>
         <Badge>Reading</Badge>
       </div>
 
-      <div className="animated-table" key={`table-${index}`}>
+      <div className="animated-table" key={`table-${index}`} aria-hidden>
         <div className="ledger-grid ledger-column-head">
           <span>Vendor</span>
           <span>Date</span>
@@ -103,7 +115,7 @@ export function AnimatedLedger() {
         ))}
       </div>
 
-      <div className="ledger-total">
+      <div className="ledger-total" aria-hidden>
         <span>Total this month</span>
         <strong className="money animated-total">
           {doc.totalSteps.map((total, stepIndex) => (
@@ -113,6 +125,6 @@ export function AnimatedLedger() {
           ))}
         </strong>
       </div>
-    </div>
+    </figure>
   );
 }

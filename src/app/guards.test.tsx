@@ -35,6 +35,14 @@ describe("RequireAuth", () => {
     expect(await screen.findByText("secret page")).toBeInTheDocument();
   });
 
+  it("keeps the session when refresh is rate limited instead of logging out", async () => {
+    server.use(http.post(`${API}/auth/refresh`, () => apiError(429, "Too many attempts. Please try again in 20 seconds.")));
+    renderGuarded();
+    expect(await screen.findByText("We couldn't restore your session")).toBeInTheDocument();
+    expect(screen.getByText(/try again in 20 seconds/)).toBeInTheDocument();
+    expect(screen.queryByText("login page")).not.toBeInTheDocument();
+  });
+
   it("redirects to login when there is no session", async () => {
     server.use(http.post(`${API}/auth/refresh`, () => apiError(401, "Invalid refresh token")));
     renderGuarded();

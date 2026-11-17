@@ -32,7 +32,7 @@ export function Field({ label, helper, error, labelAction, inputAction, classNam
           ref={ref}
           id={id}
           className={cn(
-            "h-9 w-full rounded-control border border-line-strong bg-surface px-[11px] text-sm text-text placeholder:text-slate-400 focus:border-accent read-only:bg-muted read-only:text-secondary",
+            "h-9 w-full rounded-control border border-line-strong bg-surface px-[11px] text-sm text-text focus:border-accent read-only:bg-muted read-only:text-secondary",
             error && "border-danger",
             inputAction !== undefined && "pr-[58px]",
             className,

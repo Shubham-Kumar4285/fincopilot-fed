@@ -10,7 +10,9 @@ import {
   Settings,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+
+import { useMediaQuery } from "@/shared/hooks/use-media-query";
 import { NavLink, Outlet, useLocation, useMatches, useNavigate } from "react-router-dom";
 
 import { useLogoutMutation } from "@/features/auth";
@@ -53,6 +55,29 @@ export function AppShell() {
   const navigate = useNavigate();
   const location = useLocation();
   const inSettings = location.pathname.startsWith("/app/settings");
+  const isDesktop = useMediaQuery("(min-width: 768px)", true);
+  const drawerRef = useRef<HTMLElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const drawerHidden = !isDesktop && !drawerOpen;
+
+  useEffect(() => {
+    document.title = title === "FinCopilot" ? title : `${title} · FinCopilot`;
+  }, [title]);
+
+  useEffect(() => {
+    if (!drawerOpen) return;
+    drawerRef.current?.querySelector<HTMLElement>("a, button")?.focus();
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setDrawerOpen(false);
+        menuButtonRef.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [drawerOpen]);
 
   const closeDrawer = () => {
     setDrawerOpen(false);
@@ -69,6 +94,9 @@ export function AppShell() {
         />
       )}
       <aside
+        ref={drawerRef}
+        inert={drawerHidden}
+        aria-hidden={drawerHidden || undefined}
         className={cn(
           "fixed inset-y-0 left-0 z-30 flex w-[240px] flex-col border-r border-line bg-surface transition-transform motion-reduce:transition-none md:translate-x-0",
           drawerOpen ? "translate-x-0" : "-translate-x-full",
@@ -76,7 +104,7 @@ export function AppShell() {
       >
         <div className="flex h-16 items-center gap-1.5 border-b border-line px-2.5">
           <OrgSwitcher onNavigate={closeDrawer} />
-          <button type="button" className="text-secondary md:hidden" aria-label="Close navigation" onClick={closeDrawer}>
+          <button type="button" className="grid size-8 place-items-center rounded-control text-secondary hover:bg-muted hover:text-text md:hidden" aria-label="Close navigation" onClick={closeDrawer}>
             <X size={18} aria-hidden />
           </button>
         </div>
@@ -128,6 +156,7 @@ export function AppShell() {
       <div className="flex min-h-screen flex-col">
         <header className="sticky top-0 z-10 flex h-16 items-center gap-3 border-b border-line bg-surface px-4 sm:px-6">
           <button
+            ref={menuButtonRef}
             type="button"
             className="grid size-9 place-items-center rounded-control text-slate-600 hover:bg-muted md:hidden"
             aria-label="Open navigation"

@@ -10,20 +10,22 @@ const TOAST_DURATION_MS = 4000;
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toast, setToast] = useState<ToastMessage | null>(null);
+  // Hover or focus holds the toast open so it can be read at any pace.
+  const [held, setHeld] = useState(false);
 
   const show = useCallback<ShowToast>((title, description) => {
     setToast({ id: Date.now(), title, description });
   }, []);
 
   useEffect(() => {
-    if (!toast) return;
+    if (!toast || held) return;
     const timer = window.setTimeout(() => {
       setToast(null);
     }, TOAST_DURATION_MS);
     return () => {
       window.clearTimeout(timer);
     };
-  }, [toast]);
+  }, [toast, held]);
 
   return (
     <ToastContext value={show}>
@@ -32,8 +34,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         <ToastView
           key={toast.id}
           toast={toast}
+          onHold={setHeld}
           onDismiss={() => {
             setToast(null);
+            setHeld(false);
           }}
         />
       )}
