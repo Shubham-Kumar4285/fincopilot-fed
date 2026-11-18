@@ -1,4 +1,4 @@
-import { Check, ChevronsUpDown, Plus } from "lucide-react";
+import { Check, ChevronsUpDown, Plus, RotateCcw } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { Link } from "react-router-dom";
@@ -6,9 +6,11 @@ import { Link } from "react-router-dom";
 import { useMyInvitesQuery } from "@/features/users";
 import { PATHS } from "@/shared/config/paths";
 import { cn } from "@/shared/lib/cn";
+import { formatDate } from "@/shared/lib/date";
 import { Avatar } from "@/shared/ui/Avatar";
 
-import { useCurrentOrgQuery, useOrgsQuery, useSwitchOrg } from "../api";
+import { useCurrentOrgQuery, useOrgsQuery, useRestoreOrgMutation, useSwitchOrg } from "../api";
+import { RestoreWorkspaceDialog } from "./RestoreWorkspaceDialog";
 
 const PLAN_LABEL: Record<string, string> = { free: "Free plan", solo: "Solo plan", team: "Team plan", agency: "Agency plan" };
 const ROLE_LABEL: Record<string, string> = { owner: "Owner", admin: "Admin", member: "Member" };
@@ -28,6 +30,9 @@ export function OrgSwitcher({ onNavigate }: { onNavigate?: () => void }) {
   const orgs = useOrgsQuery();
   const invites = useMyInvitesQuery();
   const switchOrg = useSwitchOrg();
+  const restore = useRestoreOrgMutation();
+  const [restoreId, setRestoreId] = useState<string | null>(null);
+  const restoreTarget = orgs.data?.find((org) => org.id === restoreId && org.status === "pending_deletion") ?? null;
   const inviteCount = invites.data?.length ?? 0;
 
   useEffect(() => {
@@ -130,6 +135,54 @@ export function OrgSwitcher({ onNavigate }: { onNavigate?: () => void }) {
           {orgs.isError && <p className="px-2 py-1.5 text-xs text-danger">Couldn't load your workspaces.</p>}
           {orgs.data?.map((org) => {
             const isCurrent = org.id === current.data?.id;
+            if (org.status === "pending_deletion" && org.role !== "owner") {
+              // Members can't open or restore it; they're told whom to ask.
+              return (
+                <div
+                  key={org.id}
+                  role="menuitem"
+                  tabIndex={-1}
+                  aria-disabled="true"
+                  className="flex w-full items-center gap-2 rounded-control px-2 py-1.5"
+                >
+                  <Avatar name={org.name} size="sm" />
+                  <span className="flex min-w-0 flex-1 flex-col opacity-70">
+                    <span className="truncate text-[13px] font-medium line-through">{org.name}</span>
+                    <span className="text-[11px] text-secondary">
+                      Deleted by {org.owner_name ?? "the owner"}. Contact them to restore it.
+                    </span>
+                  </span>
+                </div>
+              );
+            }
+            if (org.status === "pending_deletion") {
+              // The owner can't open a deleted workspace, only restore it (after confirming).
+              return (
+                <button
+                  key={org.id}
+                  type="button"
+                  role="menuitem"
+                  tabIndex={-1}
+                  aria-label={`Restore ${org.name}…`}
+                  className="flex w-full items-center gap-2 rounded-control px-2 py-1.5 text-left hover:bg-muted"
+                  onClick={() => {
+                    // Opens a confirmation; nothing is restored until the owner confirms.
+                    setIsOpen(false);
+                    restore.reset();
+                    setRestoreId(org.id);
+                  }}
+                >
+                  <Avatar name={org.name} size="sm" />
+                  <span className="flex min-w-0 flex-1 flex-col opacity-70">
+                    <span className="truncate text-[13px] font-medium line-through">{org.name}</span>
+                    <span className="text-[11px] text-secondary">
+                      Deleted{org.purge_after ? ` · restore by ${formatDate(org.purge_after)}` : ""}
+                    </span>
+                  </span>
+                  <RotateCcw size={14} className="text-accent" aria-hidden />
+                </button>
+              );
+            }
             return (
               <button
                 key={org.id}
@@ -166,6 +219,24 @@ export function OrgSwitcher({ onNavigate }: { onNavigate?: () => void }) {
           </Link>
         </div>
       )}
+
+      <RestoreWorkspaceDialog
+        org={restoreTarget}
+        isRestoring={restore.isPending}
+        error={restore.error}
+        onClose={() => {
+          if (!restore.isPending) setRestoreId(null);
+        }}
+        onRestore={() => {
+          if (!restoreTarget) return;
+          restore.mutate(restoreTarget.id, {
+            onSuccess: () => {
+              setRestoreId(null);
+              onNavigate?.();
+            },
+          });
+        }}
+      />
     </div>
   );
 }

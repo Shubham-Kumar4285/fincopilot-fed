@@ -1,19 +1,27 @@
 import { AlertCircle } from "lucide-react";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 
 import { Button } from "@/shared/ui/Button";
+import { PATHS } from "@/shared/config/paths";
 import { PageHeader } from "@/shared/ui/PageHeader";
-import { SoonBadge } from "@/shared/ui/SoonBadge";
 import { StateMessage } from "@/shared/ui/StateMessage";
 import { TableSkeleton } from "@/shared/ui/TableSkeleton";
 import { useToast } from "@/shared/ui/toast-context";
 
 import { useCurrentOrgQuery, useMyRole, useUpdateOrgMutation } from "../api";
+import { DeleteWorkspaceDialog } from "../components/DeleteWorkspaceDialog";
+import { LeaveWorkspaceDialog } from "../components/LeaveWorkspaceDialog";
 import { SettingsLayout } from "../components/SettingsLayout";
 import { WorkspaceForm } from "../components/WorkspaceForm";
 
 export function GeneralSettingsPage() {
   const org = useCurrentOrgQuery();
-  const { isAdmin, isPending: rolePending } = useMyRole();
+  const { role, isAdmin, isPending: rolePending } = useMyRole();
+  const [dialog, setDialog] = useState<"delete" | "leave" | null>(null);
+  const closeDialog = () => {
+    setDialog(null);
+  };
   const mutation = useUpdateOrgMutation();
   const toast = useToast();
 
@@ -52,20 +60,53 @@ export function GeneralSettingsPage() {
         )}
       </section>
 
-      <section className="mt-8 flex max-w-[700px] flex-wrap items-center justify-between gap-6 rounded-card border border-red-200 bg-surface px-6 py-5">
-        <div>
-          <h2 className="flex items-center gap-2 text-[15px]">
-            Delete workspace <SoonBadge />
-          </h2>
-          <p className="mt-1 text-[13px] text-secondary">
-            Permanently delete this workspace and all of its data. This action cannot be undone.
-          </p>
-          <span className="mt-1 block text-xs text-secondary">Only workspace owners can do this.</span>
-        </div>
-        <Button variant="destructive" disabled>
-          Delete workspace
-        </Button>
-      </section>
+      {org.data && role && (
+        <section className="mt-8 flex max-w-[700px] flex-wrap items-center justify-between gap-6 rounded-card border border-red-200 bg-surface px-6 py-5">
+          {role === "owner" ? (
+            <>
+              <div>
+                <h2 className="text-[15px]">Delete workspace</h2>
+                <p className="mt-1 text-[13px] text-secondary">
+                  Members lose access right away. You can restore it for 30 days, then it's deleted for good.
+                </p>
+                <p className="mt-1 text-xs text-secondary">
+                  Want to leave instead?{" "}
+                  <Link className="font-semibold text-accent-hover hover:underline" to={PATHS.settingsMembers}>
+                    Transfer ownership
+                  </Link>{" "}
+                  to a member first.
+                </p>
+              </div>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  setDialog("delete");
+                }}
+              >
+                Delete workspace
+              </Button>
+            </>
+          ) : (
+            <>
+              <div>
+                <h2 className="text-[15px]">Leave workspace</h2>
+                <p className="mt-1 text-[13px] text-secondary">You'll lose access until someone invites you again.</p>
+              </div>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  setDialog("leave");
+                }}
+              >
+                Leave workspace
+              </Button>
+            </>
+          )}
+        </section>
+      )}
+
+      <DeleteWorkspaceDialog open={dialog === "delete"} orgName={org.data?.name ?? ""} onClose={closeDialog} />
+      <LeaveWorkspaceDialog open={dialog === "leave"} orgName={org.data?.name ?? ""} onClose={closeDialog} />
     </SettingsLayout>
   );
 }

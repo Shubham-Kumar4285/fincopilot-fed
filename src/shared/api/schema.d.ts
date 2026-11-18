@@ -158,7 +158,11 @@ export interface paths {
         get: operations["get_current_user_profile_v1_users_me_get"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete My Account
+         * @description Delete the account with the emailed code (and current password, if set). Signs out every device. Solo organizations are deleted with it; you leave the others. Restorable by signing in during the grace period.
+         */
+        delete: operations["delete_my_account_v1_users_me_delete"];
         options?: never;
         head?: never;
         /**
@@ -228,6 +232,126 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/users/me/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List My Sessions
+         * @description Devices currently signed in to this account (not revoked, not expired)
+         */
+        get: operations["list_my_sessions_v1_users_me_sessions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/users/me/sessions/revoke-others": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sign Out Other Devices
+         * @description Revoke every session except the one making this request
+         */
+        post: operations["revoke_other_sessions_v1_users_me_sessions_revoke_others_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/users/me/sessions/{session_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke Session
+         * @description Sign out one device. Revoking the current session also clears the refresh cookie.
+         */
+        delete: operations["revoke_my_session_v1_users_me_sessions__session_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/users/me/password/otp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send Password Change Code
+         * @description Email a 6-digit code needed to change (or, for Google-only accounts, set) the password
+         */
+        post: operations["send_password_change_code_v1_users_me_password_otp_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/users/me/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change Password
+         * @description Change the password with the current password and the emailed code. Google-only accounts omit current_password to set their first password. Other devices are signed out.
+         */
+        post: operations["change_password_v1_users_me_password_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/users/me/delete/otp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send Account Deletion Code
+         * @description Email the code that confirms account deletion. 409 (with details.orgs) if you own organizations that have other members: transfer ownership or delete them first.
+         */
+        post: operations["send_account_deletion_code_v1_users_me_delete_otp_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/orgs": {
         parameters: {
             query?: never;
@@ -266,7 +390,11 @@ export interface paths {
         get: operations["get_current_organization_v1_orgs_current_get"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete Organization
+         * @description Owner deletes the organization. It becomes unusable at once and is permanently deleted after the grace period; until then the owner can restore it. Body: the org name, typed to confirm.
+         */
+        delete: operations["delete_organization_v1_orgs_current_delete"];
         options?: never;
         head?: never;
         /**
@@ -274,6 +402,26 @@ export interface paths {
          * @description Update organization settings (requires admin role)
          */
         patch: operations["update_organization_v1_orgs_current_patch"];
+        trace?: never;
+    };
+    "/v1/orgs/{org_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Restore Organization
+         * @description Owner cancels a pending deletion before the grace period ends; the other members are emailed
+         */
+        post: operations["restore_organization_v1_orgs__org_id__restore_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/v1/orgs/current/members": {
@@ -311,6 +459,50 @@ export interface paths {
          * @description Remove a member from the organization (requires admin role)
          */
         delete: operations["remove_organization_member_v1_orgs_current_members__user_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Change Member Role
+         * @description Owner makes a member an admin or an admin a member (ownership moves via transfer)
+         */
+        patch: operations["update_organization_member_role_v1_orgs_current_members__user_id__patch"];
+        trace?: never;
+    };
+    "/v1/orgs/current/transfer-ownership": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Transfer Ownership
+         * @description Owner hands the organization to another member and becomes an admin
+         */
+        post: operations["transfer_organization_ownership_v1_orgs_current_transfer_ownership_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/orgs/current/leave": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Leave Organization
+         * @description Leave the current organization. The owner must transfer ownership (or delete the org) first.
+         */
+        post: operations["leave_organization_v1_orgs_current_leave_post"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -418,6 +610,37 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AccountDeleteCodeResponse */
+        AccountDeleteCodeResponse: {
+            /**
+             * Message
+             * @default A verification code has been sent to your email
+             */
+            message: string;
+            /**
+             * Expires In
+             * @description Seconds until the code expires
+             */
+            expires_in: number;
+            /**
+             * Has Password
+             * @description If true, send current_password with the code
+             */
+            has_password: boolean;
+        };
+        /** AccountDeleteRequest */
+        AccountDeleteRequest: {
+            /**
+             * Otp
+             * @description 6-digit code from the email
+             */
+            otp: string;
+            /**
+             * Current Password
+             * @description Required when the account has a password
+             */
+            current_password?: string | null;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -439,6 +662,12 @@ export interface components {
              * @description User password
              */
             password: string;
+            /**
+             * Restore Account
+             * @description Set after a 403 account_pending_deletion to restore the deleted account and sign in
+             * @default false
+             */
+            restore_account: boolean;
         };
         /**
          * LoginResponse
@@ -547,6 +776,12 @@ export interface components {
              * @description Redirect URI used in OAuth flow
              */
             redirect_uri?: string | null;
+            /**
+             * Restore Account
+             * @description Set after a 403 account_pending_deletion to restore the deleted account and sign in
+             * @default false
+             */
+            restore_account: boolean;
         };
         /**
          * OrgInviteAcceptResponse
@@ -736,6 +971,20 @@ export interface components {
          */
         OrgMemberRole: "owner" | "admin" | "member";
         /**
+         * OrgMemberUpdateRole
+         * @description Schema for updating member role.
+         */
+        OrgMemberUpdateRole: {
+            /** @description New role (admin or member; ownership moves via transfer) */
+            role: components["schemas"]["OrgMemberRole"];
+        };
+        /**
+         * OrgStatus
+         * @description Organization lifecycle.
+         * @enum {string}
+         */
+        OrgStatus: "active" | "pending_deletion";
+        /**
          * OrganizationCreate
          * @description Schema for creating an organization.
          */
@@ -756,6 +1005,14 @@ export interface components {
              * @default USD
              */
             base_currency: string;
+        };
+        /** OrganizationDeleteRequest */
+        OrganizationDeleteRequest: {
+            /**
+             * Confirm Name
+             * @description Type the organization's name to confirm
+             */
+            confirm_name: string;
         };
         /**
          * OrganizationResponse
@@ -803,6 +1060,16 @@ export interface components {
              * @description Number of members (if included)
              */
             member_count?: number | null;
+            /**
+             * @description active | pending_deletion
+             * @default active
+             */
+            status: components["schemas"]["OrgStatus"];
+            /**
+             * Purge After
+             * @description If pending deletion: when it is permanently deleted (restore before this)
+             */
+            purge_after?: string | null;
         };
         /**
          * OrganizationUpdate
@@ -871,8 +1138,94 @@ export interface components {
              * @description Number of members (if included)
              */
             member_count?: number | null;
+            /**
+             * @description active | pending_deletion
+             * @default active
+             */
+            status: components["schemas"]["OrgStatus"];
+            /**
+             * Purge After
+             * @description If pending deletion: when it is permanently deleted (restore before this)
+             */
+            purge_after?: string | null;
             /** @description The caller's role in this organization */
             role: components["schemas"]["OrgMemberRole"];
+            /**
+             * Owner Name
+             * @description If pending deletion: the owner's name, so members know whom to contact
+             */
+            owner_name?: string | null;
+        };
+        /** OwnershipTransferRequest */
+        OwnershipTransferRequest: {
+            /**
+             * User Id
+             * Format: uuid
+             * @description Existing member who becomes the owner
+             */
+            user_id: string;
+        };
+        /** OwnershipTransferResponse */
+        OwnershipTransferResponse: {
+            /**
+             * Org Id
+             * Format: uuid
+             */
+            org_id: string;
+            /**
+             * New Owner Id
+             * Format: uuid
+             */
+            new_owner_id: string;
+            /** @description The previous owner's role after the transfer (admin) */
+            your_role: components["schemas"]["OrgMemberRole"];
+        };
+        /** PasswordChangeCodeResponse */
+        PasswordChangeCodeResponse: {
+            /**
+             * Message
+             * @default A verification code has been sent to your email
+             */
+            message: string;
+            /**
+             * Expires In
+             * @description Seconds until the code expires
+             */
+            expires_in: number;
+            /**
+             * Has Password
+             * @description False for Google-only accounts: they set a password and don't send current_password
+             */
+            has_password: boolean;
+        };
+        /**
+         * PasswordChangeRequest
+         * @description Change (or, for Google-only accounts, set) the password while signed in.
+         */
+        PasswordChangeRequest: {
+            /**
+             * Otp
+             * @description 6-digit code from the email
+             */
+            otp: string;
+            /**
+             * New Password
+             * @description New password (minimum 8 characters)
+             */
+            new_password: string;
+            /**
+             * Current Password
+             * @description Required when the account already has a password
+             */
+            current_password?: string | null;
+        };
+        /** PasswordChangeResponse */
+        PasswordChangeResponse: {
+            /**
+             * Message
+             * @default Password updated. Your other devices have been signed out.
+             */
+            message: string;
         };
         /**
          * PasswordForgotRequest
@@ -953,6 +1306,57 @@ export interface components {
              * @description Access token expiration in seconds
              */
             expires_in: number;
+        };
+        /** RevokeSessionsResponse */
+        RevokeSessionsResponse: {
+            /**
+             * Revoked
+             * @description Number of sessions signed out
+             */
+            revoked: number;
+        };
+        /** SessionListResponse */
+        SessionListResponse: {
+            /** Items */
+            items: components["schemas"]["SessionResponse"][];
+        };
+        /**
+         * SessionResponse
+         * @description One signed-in device, as shown on the "active sessions" page.
+         */
+        SessionResponse: {
+            /**
+             * Id
+             * Format: uuid
+             * @description Session ID
+             */
+            id: string;
+            /**
+             * Device Info
+             * @description User agent of the device
+             */
+            device_info?: string | null;
+            /**
+             * Ip Address
+             * @description IP address at sign-in
+             */
+            ip_address?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             * @description When the device signed in
+             */
+            created_at: string;
+            /**
+             * Last Used At
+             * @description Last token refresh (approximate last activity)
+             */
+            last_used_at?: string | null;
+            /**
+             * Is Current
+             * @description True for the session making this request
+             */
+            is_current: boolean;
         };
         /**
          * SignupRequest
@@ -1333,6 +1737,37 @@ export interface operations {
             };
         };
     };
+    delete_my_account_v1_users_me_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccountDeleteRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     update_current_user_profile_v1_users_me_patch: {
         parameters: {
             query?: never;
@@ -1446,6 +1881,148 @@ export interface operations {
             };
         };
     };
+    list_my_sessions_v1_users_me_sessions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionListResponse"];
+                };
+            };
+        };
+    };
+    revoke_other_sessions_v1_users_me_sessions_revoke_others_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevokeSessionsResponse"];
+                };
+            };
+        };
+    };
+    revoke_my_session_v1_users_me_sessions__session_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    send_password_change_code_v1_users_me_password_otp_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasswordChangeCodeResponse"];
+                };
+            };
+        };
+    };
+    change_password_v1_users_me_password_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordChangeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasswordChangeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    send_account_deletion_code_v1_users_me_delete_otp_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountDeleteCodeResponse"];
+                };
+            };
+        };
+    };
     list_my_organizations_v1_orgs_get: {
         parameters: {
             query?: never;
@@ -1530,6 +2107,39 @@ export interface operations {
             };
         };
     };
+    delete_organization_v1_orgs_current_delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Org-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrganizationDeleteRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     update_organization_v1_orgs_current_patch: {
         parameters: {
             query?: never;
@@ -1544,6 +2154,37 @@ export interface operations {
                 "application/json": components["schemas"]["OrganizationUpdate"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrganizationResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restore_organization_v1_orgs__org_id__restore_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {
@@ -1605,6 +2246,107 @@ export interface operations {
             path: {
                 user_id: string;
             };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_organization_member_role_v1_orgs_current_members__user_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Org-Id"?: string | null;
+            };
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrgMemberUpdateRole"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrgMemberResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    transfer_organization_ownership_v1_orgs_current_transfer_ownership_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Org-Id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OwnershipTransferRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnershipTransferResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    leave_organization_v1_orgs_current_leave_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Org-Id"?: string | null;
+            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;

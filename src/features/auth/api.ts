@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { clearActiveOrg } from "@/features/organizations";
 import { api, refreshSession } from "@/shared/api/client";
+import { ApiError } from "@/shared/api/errors";
 import { tokenStore } from "@/shared/api/token-store";
 import type { Schema } from "@/shared/api/types";
 
@@ -24,8 +25,17 @@ const AUTH_OPTS = { skipAuth: true, skipRefresh: true } as const;
 // Requests
 // ---------------------------------------------------------------------------
 
-async function login(input: LoginInput): Promise<Schema<"LoginResponse">> {
-  const body: Schema<"LoginRequest"> = { email: input.email, password: input.password };
+export interface LoginRequest extends LoginInput {
+  /** Set after a 403 `account_pending_deletion` to restore the deleted account and sign in. */
+  restoreAccount?: boolean;
+}
+
+async function login(input: LoginRequest): Promise<Schema<"LoginResponse">> {
+  const body: Schema<"LoginRequest"> = {
+    email: input.email,
+    password: input.password,
+    restore_account: input.restoreAccount ?? false,
+  };
   const raw = await api.post<Schema<"LoginResponse">>("/auth/login", body, AUTH_OPTS);
   tokenStore.set(tokenResponseSchema.parse(raw).access_token);
   return raw;
@@ -55,6 +65,16 @@ async function forgotPassword(input: ForgotPasswordInput): Promise<void> {
 async function resetPassword({ token, password }: ResetPasswordRequest): Promise<void> {
   const body: Schema<"PasswordResetRequest"> = { token, new_password: password };
   await api.post<Schema<"PasswordResetResponse">>("/auth/password/reset", body, AUTH_OPTS);
+}
+
+/**
+ * The account was deleted but can still be restored: returns the restore deadline (ISO string).
+ * Branches on status + `details.code`, never on the message.
+ */
+export function pendingDeletionDeadline(error: unknown): string | null {
+  if (!(error instanceof ApiError) || error.status !== 403) return null;
+  const { code, restore_until: restoreUntil } = error.details;
+  return code === "account_pending_deletion" && typeof restoreUntil === "string" ? restoreUntil : null;
 }
 
 /** True when a session exists: an in-memory token, or one restored from the refresh cookie. */

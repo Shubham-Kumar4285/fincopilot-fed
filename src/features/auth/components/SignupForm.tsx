@@ -9,12 +9,13 @@ import { Alert } from "@/shared/ui/Alert";
 import { Button } from "@/shared/ui/Button";
 import { Field } from "@/shared/ui/Field";
 import { PasswordField } from "@/shared/ui/PasswordField";
+import { PasswordStrength } from "@/shared/ui/PasswordStrength";
+import { PASSWORD_MIN_LENGTH } from "@/shared/lib/password";
 
 import { useSignupMutation } from "../api";
-import { PASSWORD_MIN_LENGTH, signupSchema } from "../schemas";
+import { signupSchema } from "../schemas";
 import type { SignupInput } from "../schemas";
 import { AuthSwitch } from "./AuthLayout";
-import { PasswordStrength } from "./PasswordStrength";
 
 /** Backend 422 field names → form field names. */
 const SERVER_FIELDS: Record<string, keyof SignupInput> = { full_name: "fullName", email: "email", password: "password" };

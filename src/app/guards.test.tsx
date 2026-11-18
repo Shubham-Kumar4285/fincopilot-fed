@@ -11,6 +11,7 @@ import { API, apiError, server, tokenResponse } from "@/test/server";
 
 import { RedirectIfAuthed, RequireAuth, RequireOrg } from "./guards";
 import { PATHS } from "@/shared/config/paths";
+import { ToastProvider } from "@/shared/ui/ToastProvider";
 
 function renderGuarded() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -54,9 +55,11 @@ function renderTree(initial: string, tree: React.ReactNode) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[initial]}>
-        <Routes>{tree}</Routes>
-      </MemoryRouter>
+      <ToastProvider>
+        <MemoryRouter initialEntries={[initial]}>
+          <Routes>{tree}</Routes>
+        </MemoryRouter>
+      </ToastProvider>
     </QueryClientProvider>,
   );
 }
@@ -165,5 +168,52 @@ describe("RequireOrg with a remembered workspace", () => {
 
     expect(await screen.findByText(`Viewing: ${org.name}`)).toBeInTheDocument();
     expect(getActiveOrg()).toBeNull();
+  });
+
+  it("tells the user when the remembered workspace was deleted, then falls back", async () => {
+    window.localStorage.setItem("fincopilot.activeOrgId", "7d4f8a2e-1b3c-4d5e-8f90-a1b2c3d4e5f6");
+    restoreActiveOrg();
+    server.use(
+      http.get(`${API}/orgs/current`, ({ request }) =>
+        request.headers.get("X-Org-Id")
+          ? apiError(403, "This organization is scheduled for deletion", { code: "org_pending_deletion" })
+          : HttpResponse.json(org),
+      ),
+      http.get(`${API}/users/me`, () => HttpResponse.json(me)),
+    );
+    renderWithProviders(
+      <Routes>
+        <Route element={<RequireOrg />}>
+          <Route path="/app" element={<CurrentOrgName />} />
+        </Route>
+      </Routes>,
+      { route: "/app" },
+    );
+
+    expect(await screen.findByText(`Viewing: ${org.name}`)).toBeInTheDocument();
+    expect(screen.getByText("That workspace was deleted")).toBeInTheDocument();
+    expect(getActiveOrg()).toBeNull();
+  });
+
+  it("falls back silently when the user was only removed", async () => {
+    window.localStorage.setItem("fincopilot.activeOrgId", "7d4f8a2e-1b3c-4d5e-8f90-a1b2c3d4e5f6");
+    restoreActiveOrg();
+    server.use(
+      http.get(`${API}/orgs/current`, ({ request }) =>
+        request.headers.get("X-Org-Id") ? apiError(403, "You are not a member of this organization") : HttpResponse.json(org),
+      ),
+      http.get(`${API}/users/me`, () => HttpResponse.json(me)),
+    );
+    renderWithProviders(
+      <Routes>
+        <Route element={<RequireOrg />}>
+          <Route path="/app" element={<CurrentOrgName />} />
+        </Route>
+      </Routes>,
+      { route: "/app" },
+    );
+
+    expect(await screen.findByText(`Viewing: ${org.name}`)).toBeInTheDocument();
+    expect(screen.queryByText("That workspace was deleted")).not.toBeInTheDocument();
   });
 });

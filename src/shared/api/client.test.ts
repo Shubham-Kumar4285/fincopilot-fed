@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { API, apiError, server, tokenResponse } from "@/test/server";
 
-import { api, configureClient } from "./client";
+import { api, configureClient, endSession } from "./client";
 import { ApiError, fieldErrors } from "./errors";
 import { tokenStore } from "./token-store";
 
@@ -104,5 +104,41 @@ describe("api client", () => {
 
     await expect(api.get("/data")).rejects.toMatchObject({ status: 401 });
     expect(dataCalls).toBe(2);
+  });
+
+  it("sends a JSON body with DELETE", async () => {
+    let sent: unknown = null;
+    server.use(
+      http.delete(`${API}/thing`, async ({ request }) => {
+        sent = await request.json();
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+
+    await expect(api.delete("/thing", { confirm_name: "Acme" })).resolves.toBeUndefined();
+    expect(sent).toEqual({ confirm_name: "Acme" });
+  });
+
+  it("passes 'expired' to onSessionExpired when refresh fails", async () => {
+    const onSessionExpired = vi.fn();
+    configureClient({ onSessionExpired });
+    server.use(
+      http.post(`${API}/auth/refresh`, () => apiError(401, "Invalid refresh token")),
+      http.get(`${API}/data`, () => apiError(401, "Invalid or expired token")),
+    );
+
+    await api.get("/data").catch(() => undefined);
+    expect(onSessionExpired).toHaveBeenCalledWith("expired");
+  });
+
+  it("endSession forgets the token and reports the reason", () => {
+    const onSessionExpired = vi.fn();
+    configureClient({ onSessionExpired });
+    tokenStore.set("abc");
+
+    endSession("account_deleted");
+
+    expect(tokenStore.get()).toBeNull();
+    expect(onSessionExpired).toHaveBeenCalledWith("account_deleted");
   });
 });

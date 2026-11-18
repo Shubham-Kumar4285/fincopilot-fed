@@ -10,10 +10,10 @@ import { router } from "./router";
 
 restoreActiveOrg();
 configureClient({
-  onSessionExpired: () => {
+  onSessionExpired: (reason) => {
     clearActiveOrg();
     queryClient.clear();
-    void router.navigate(PATHS.login);
+    void router.navigate(reason === "expired" ? PATHS.login : `${PATHS.login}?reason=${reason}`);
   },
 });
 

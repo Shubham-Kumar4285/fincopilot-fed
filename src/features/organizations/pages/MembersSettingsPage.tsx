@@ -1,5 +1,6 @@
 import { AlertCircle, Users } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import { useMeQuery } from "@/features/users";
 import { getErrorMessage } from "@/shared/api/errors";
@@ -10,18 +11,50 @@ import { StateMessage } from "@/shared/ui/StateMessage";
 import { TableSkeleton } from "@/shared/ui/TableSkeleton";
 import { useToast } from "@/shared/ui/toast-context";
 
-import { useCreateInviteMutation, useCurrentOrgQuery, useMembersQuery, useMyRole, usePendingInvitesQuery } from "../api";
+import { PATHS } from "@/shared/config/paths";
+
+import { getActiveOrg } from "../active-org";
+import {
+  useCreateInviteMutation,
+  useCurrentOrgQuery,
+  useMembersQuery,
+  useMyRole,
+  usePendingInvitesQuery,
+  useSwitchOrg,
+  useUpdateMemberRoleMutation,
+} from "../api";
 import type { OrgMember } from "../api";
 import { InviteMemberDialog } from "../components/InviteMemberDialog";
 import { MembersTable } from "../components/MembersTable";
 import { RemoveMemberDialog } from "../components/RemoveMemberDialog";
 import { SettingsLayout } from "../components/SettingsLayout";
+import { TransferOwnershipDialog } from "../components/TransferOwnershipDialog";
+
+/**
+ * `?org=<id>` (e.g. from "Delete account → Manage members") opens this page for that workspace:
+ * switch to it once, then drop the param.
+ */
+function useOrgFromUrl() {
+  const [params, setParams] = useSearchParams();
+  const switchOrg = useSwitchOrg();
+  const requested = params.get("org");
+
+  useEffect(() => {
+    if (!requested) return;
+    // Both paths replace the URL without the param.
+    if (requested !== getActiveOrg()) switchOrg(requested, PATHS.settingsMembers);
+    else setParams({}, { replace: true });
+  }, [requested, switchOrg, setParams]);
+}
 
 export function MembersSettingsPage() {
   const org = useCurrentOrgQuery();
   const me = useMeQuery();
   const members = useMembersQuery();
-  const { isAdmin } = useMyRole();
+  useOrgFromUrl();
+  const { role: myRole, isAdmin } = useMyRole();
+  const [toTransfer, setToTransfer] = useState<OrgMember | null>(null);
+  const changeRole = useUpdateMemberRoleMutation();
   const invites = usePendingInvitesQuery({ enabled: isAdmin });
   const [inviteOpen, setInviteOpen] = useState(false);
   const [toRemove, setToRemove] = useState<OrgMember | null>(null);
@@ -69,8 +102,18 @@ export function MembersSettingsPage() {
               members={memberRows}
               invites={inviteRows}
               myUserId={me.data?.id}
+              myRole={myRole}
               canManage={isAdmin}
               onRemove={setToRemove}
+              onTransfer={setToTransfer}
+              changingRoleFor={changeRole.isPending ? changeRole.variables.userId : undefined}
+              onChangeRole={(member, role) => {
+                const name = member.full_name ?? member.email ?? "Member";
+                changeRole.mutate(
+                  { userId: member.user_id, role },
+                  { onSuccess: () => { toast("Role updated", `${name} is now ${role === "admin" ? "an admin" : "a member"}.`); } },
+                );
+              }}
               reinvitingEmail={reinvite.isPending ? reinvite.variables.email : undefined}
               onReinvite={(invite) => {
                 reinvite.mutate(
@@ -79,6 +122,11 @@ export function MembersSettingsPage() {
                 );
               }}
             />
+            {changeRole.isError && (
+              <div className="border-t border-line p-3">
+                <Alert>{getErrorMessage(changeRole.error)}</Alert>
+              </div>
+            )}
             {reinvite.isError && (
               <div className="border-t border-line p-3">
                 <Alert>{getErrorMessage(reinvite.error)}</Alert>
@@ -107,6 +155,13 @@ export function MembersSettingsPage() {
         open={inviteOpen}
         onClose={() => {
           setInviteOpen(false);
+        }}
+      />
+      <TransferOwnershipDialog
+        member={toTransfer}
+        orgName={orgName}
+        onClose={() => {
+          setToTransfer(null);
         }}
       />
       <RemoveMemberDialog

@@ -25,6 +25,8 @@ export const org: Schema<"OrganizationResponse"> = {
   created_at: NOW,
   updated_at: NOW,
   member_count: 2,
+  status: "active",
+  purge_after: null,
 };
 
 export const member = (

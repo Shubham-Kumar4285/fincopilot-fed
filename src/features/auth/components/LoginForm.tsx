@@ -10,10 +10,13 @@ import { Button } from "@/shared/ui/Button";
 import { Field } from "@/shared/ui/Field";
 import { PasswordField } from "@/shared/ui/PasswordField";
 
-import { useLoginMutation } from "../api";
+import { useToast } from "@/shared/ui/toast-context";
+
+import { pendingDeletionDeadline, useLoginMutation } from "../api";
 import { loginSchema } from "../schemas";
 import type { LoginInput } from "../schemas";
 import { AuthSwitch } from "./AuthLayout";
+import { RestoreAccountDialog } from "./RestoreAccountDialog";
 
 interface LoginFormProps {
   onSuccess: () => void;
@@ -25,6 +28,9 @@ export function LoginForm({ onSuccess, nextParam }: LoginFormProps) {
   const [values, setValues] = useState<LoginInput>({ email: "", password: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const mutation = useLoginMutation();
+  const toast = useToast();
+  // Set when the credentials were right but the account is deleted and still restorable.
+  const restoreUntil = pendingDeletionDeadline(mutation.error);
 
   const update = (field: keyof LoginInput, value: string) => {
     setValues((current) => ({ ...current, [field]: value }));
@@ -46,10 +52,24 @@ export function LoginForm({ onSuccess, nextParam }: LoginFormProps) {
     });
   }
 
+  function handleRestore() {
+    const parsed = loginSchema.safeParse(values);
+    if (!parsed.success) return;
+    mutation.mutate(
+      { ...parsed.data, restoreAccount: true },
+      {
+        onSuccess: () => {
+          toast("Welcome back", "Your account was restored.");
+          onSuccess();
+        },
+      },
+    );
+  }
+
   return (
     <>
       <form className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
-        {mutation.isError && (
+        {mutation.isError && restoreUntil === null && (
           <Alert title="We couldn't log you in.">
             {getErrorMessage(mutation.error, "Check your email and password, then try again.")}
           </Alert>
@@ -85,6 +105,14 @@ export function LoginForm({ onSuccess, nextParam }: LoginFormProps) {
           Log in
         </Button>
       </form>
+      <RestoreAccountDialog
+        restoreUntil={restoreUntil}
+        isRestoring={mutation.isPending}
+        onRestore={handleRestore}
+        onClose={() => {
+          mutation.reset();
+        }}
+      />
       <AuthSwitch>
         No account? <Link to={withNext(PATHS.signup, nextParam)}>Sign up</Link>
       </AuthSwitch>

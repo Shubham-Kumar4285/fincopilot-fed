@@ -3,10 +3,11 @@ import { useEffect } from "react";
 import { Navigate, Outlet, useLocation, useSearchParams } from "react-router-dom";
 
 import { useSessionQuery } from "@/features/auth";
-import { clearActiveOrg, getActiveOrg, useCurrentOrgQuery } from "@/features/organizations";
+import { clearActiveOrg, getActiveOrg, isOrgPendingDeletion, useCurrentOrgQuery } from "@/features/organizations";
 import { ApiError, getErrorMessage } from "@/shared/api/errors";
 import { PATHS, safeNextPath, withNext } from "@/shared/config/paths";
 import { StateMessage } from "@/shared/ui/StateMessage";
+import { useToast } from "@/shared/ui/toast-context";
 
 import { RouteFallback } from "./RouteStates";
 
@@ -35,16 +36,22 @@ export function RequireAuth() {
 /** Child routes need an organization; users without one go to onboarding. */
 export function RequireOrg() {
   const org = useCurrentOrgQuery();
-  // A remembered workspace the user no longer belongs to (removed, or another account) is a 403:
-  // forget it and fall back to the primary org.
+  const toast = useToast();
+  // A remembered workspace the user can no longer open (removed, deleted by its owner, or another
+  // account) is a 403: forget it and fall back to the primary org.
   const isStaleSelection = org.error instanceof ApiError && org.error.status === 403 && getActiveOrg() !== null;
+  const wasDeleted = isOrgPendingDeletion(org.error);
   const { refetch } = org;
 
   useEffect(() => {
     if (!isStaleSelection) return;
+    if (wasDeleted) {
+      // The switcher then lists it as deleted: with a restore action for the owner, whom to contact for members.
+      toast("That workspace was deleted", "See the workspace switcher for details. You've been moved to another workspace.");
+    }
     clearActiveOrg();
     void refetch();
-  }, [isStaleSelection, refetch]);
+  }, [isStaleSelection, wasDeleted, refetch, toast]);
 
   if (org.isPending || isStaleSelection) return <RouteFallback />;
   if (org.error instanceof ApiError && org.error.status === 404) {

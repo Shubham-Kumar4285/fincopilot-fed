@@ -1,6 +1,5 @@
 import { cn } from "@/shared/lib/cn";
-
-import { PASSWORD_MIN_LENGTH } from "../schemas";
+import { PASSWORD_MIN_LENGTH } from "@/shared/lib/password";
 
 /** UI guidance only: counts how many of four simple rules the password meets. */
 function strengthOf(password: string): number {

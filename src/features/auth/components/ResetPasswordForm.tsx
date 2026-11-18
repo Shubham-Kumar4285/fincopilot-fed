@@ -9,12 +9,12 @@ import { Alert } from "@/shared/ui/Alert";
 import { buttonClasses } from "@/shared/ui/button-classes";
 import { Button } from "@/shared/ui/Button";
 import { PasswordField } from "@/shared/ui/PasswordField";
+import { PasswordStrength } from "@/shared/ui/PasswordStrength";
 
 import { useResetPasswordMutation } from "../api";
 import { resetPasswordSchema } from "../schemas";
 import type { ResetPasswordInput } from "../schemas";
 import { AuthLayout, AuthSwitch } from "./AuthLayout";
-import { PasswordStrength } from "./PasswordStrength";
 
 /** Owns the whole screen: heading changes for invalid-link and success states. */
 export function ResetPasswordForm({ token }: { token: string | null }) {

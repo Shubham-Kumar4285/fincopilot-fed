@@ -22,9 +22,12 @@ export interface RequestOptions {
   signal?: AbortSignal;
 }
 
+/** Why the user is being sent to the login page (shown there as a message). */
+export type SessionEndReason = "expired" | "signed_out" | "account_deleted";
+
 interface ClientConfig {
-  /** Called when the refresh token is rejected; the app navigates to login. */
-  onSessionExpired: () => void;
+  /** Called when the session ends: refresh rejected, or a feature ended it. The app navigates to login. */
+  onSessionExpired: (reason: SessionEndReason) => void;
 }
 
 let config: ClientConfig = { onSessionExpired: () => undefined };
@@ -92,7 +95,7 @@ async function request<T>(method: Method, path: string, body: unknown, opts: Req
     if (await refreshSession()) {
       response = await send(method, path, body, opts);
     } else {
-      config.onSessionExpired();
+      config.onSessionExpired("expired");
     }
   }
 
@@ -106,5 +109,14 @@ export const api = {
   post: <T>(path: string, body?: unknown, opts?: RequestOptions) => request<T>("POST", path, body, opts),
   put: <T>(path: string, body?: unknown, opts?: RequestOptions) => request<T>("PUT", path, body, opts),
   patch: <T>(path: string, body?: unknown, opts?: RequestOptions) => request<T>("PATCH", path, body, opts),
-  delete: <T = undefined>(path: string, opts?: RequestOptions) => request<T>("DELETE", path, undefined, opts),
+  delete: <T = undefined>(path: string, body?: unknown, opts?: RequestOptions) => request<T>("DELETE", path, body, opts),
 };
+
+/**
+ * End the local session after the server already did (this device signed out, account deleted):
+ * forget the token and let the app clear its state and show the login page with `reason`.
+ */
+export function endSession(reason: SessionEndReason): void {
+  tokenStore.clear();
+  config.onSessionExpired(reason);
+}

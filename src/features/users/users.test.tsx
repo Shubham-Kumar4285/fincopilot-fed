@@ -10,7 +10,7 @@ import { API, server } from "@/test/server";
 import { ProfilePage } from "./pages/ProfilePage";
 
 describe("ProfilePage", () => {
-  it("saves a new name and shows unbuilt sections as Soon", async () => {
+  it("saves a new name", async () => {
     let sent: unknown;
     server.use(
       http.get(`${API}/users/me`, () => HttpResponse.json(me)),
@@ -31,6 +31,5 @@ describe("ProfilePage", () => {
 
     expect(await screen.findByText("Profile updated")).toBeInTheDocument();
     expect(sent).toEqual({ full_name: "Arjun M" });
-    expect(screen.getByRole("button", { name: "Update password" })).toBeDisabled();
   });
 });

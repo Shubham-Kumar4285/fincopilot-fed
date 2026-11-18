@@ -120,7 +120,7 @@ describe("MembersSettingsPage", () => {
     );
     renderWithProviders(<MembersSettingsPage />);
 
-    await userEvent.click(await screen.findByRole("button", { name: "Remove" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Remove Meera Shah" }));
     const dialog = screen.getByRole("dialog", { name: "Remove member?" });
     await userEvent.click(within(dialog).getByRole("button", { name: "Remove member" }));
 

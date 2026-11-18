@@ -9,10 +9,11 @@ import { useNavigate } from "react-router-dom";
 
 import { useMeQuery, userKeys } from "@/features/users";
 import { api } from "@/shared/api/client";
+import { ApiError } from "@/shared/api/errors";
 import type { Schema } from "@/shared/api/types";
 import { PATHS } from "@/shared/config/paths";
 
-import { setActiveOrg } from "./active-org";
+import { clearActiveOrg, setActiveOrg } from "./active-org";
 import type { InviteInput, WorkspaceInput } from "./schemas";
 
 export type Organization = Schema<"OrganizationResponse">;
@@ -43,6 +44,20 @@ const getPendingInvites = () => api.get<OrgInvite[]>("/orgs/current/invites");
 const createInvite = (input: InviteInput) =>
   api.post<OrgInvite>("/orgs/current/invites", input satisfies Schema<"OrgInviteCreate">);
 const removeMember = (userId: string) => api.delete(`/orgs/current/members/${encodeURIComponent(userId)}`);
+const updateMemberRole = ({ userId, role }: { userId: string; role: Schema<"OrgMemberUpdateRole">["role"] }) =>
+  api.patch<OrgMember>(
+    `/orgs/current/members/${encodeURIComponent(userId)}`,
+    { role } satisfies Schema<"OrgMemberUpdateRole">,
+  );
+const transferOwnership = (userId: string) =>
+  api.post<Schema<"OwnershipTransferResponse">>(
+    "/orgs/current/transfer-ownership",
+    { user_id: userId } satisfies Schema<"OwnershipTransferRequest">,
+  );
+const leaveOrg = () => api.post("/orgs/current/leave");
+const deleteOrg = (confirmName: string) =>
+  api.delete("/orgs/current", { confirm_name: confirmName } satisfies Schema<"OrganizationDeleteRequest">);
+const restoreOrg = (orgId: string) => api.post<Organization>(`/orgs/${encodeURIComponent(orgId)}/restore`);
 
 const getInvitePreview = (token: string) =>
   api.get<InvitePreview>(`/orgs/invites/${encodeURIComponent(token)}`, { skipRefresh: true });
@@ -74,18 +89,32 @@ export function useOrgsQuery() {
 const USER_SCOPED_ROOTS = new Set<unknown>(["auth", "users"]);
 const isWorkspaceQuery = ({ queryKey }: { queryKey: readonly unknown[] }) => !USER_SCOPED_ROOTS.has(queryKey[0]);
 
-/** Make `orgId` the active workspace: reset every workspace query (any feature) and open its dashboard. */
+/** Make `orgId` the active workspace: reset every workspace query (any feature) and open `to` (its dashboard). */
 export function useSwitchOrg() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   return useCallback(
-    (orgId: string) => {
+    (orgId: string, to: string = PATHS.dashboard) => {
       setActiveOrg(orgId);
       void queryClient.resetQueries({ predicate: isWorkspaceQuery });
-      void navigate(PATHS.dashboard, { replace: true });
+      void navigate(to, { replace: true });
     },
     [queryClient, navigate],
   );
+}
+
+/**
+ * After leaving or deleting the current workspace: forget it, drop its data and go to the dashboard,
+ * where RequireOrg falls back to the next workspace (or onboarding when there is none).
+ */
+function useExitWorkspace() {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  return useCallback(() => {
+    clearActiveOrg();
+    void queryClient.resetQueries({ predicate: isWorkspaceQuery });
+    void navigate(PATHS.dashboard, { replace: true });
+  }, [queryClient, navigate]);
 }
 
 export function useCurrentOrgQuery() {
@@ -181,4 +210,54 @@ export function useDeclineMyInviteMutation() {
     mutationFn: declineMyInvite,
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: userKeys.invites }),
   });
+}
+
+/** Owner only. Admin <-> member; ownership moves through `useTransferOwnershipMutation`. */
+export function useUpdateMemberRoleMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateMemberRole,
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: orgKeys.members }),
+  });
+}
+
+/** The caller becomes an admin, so their role in the workspace list changes too. */
+export function useTransferOwnershipMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: transferOwnership,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: orgKeys.members });
+      void queryClient.invalidateQueries({ queryKey: orgKeys.current });
+      void queryClient.invalidateQueries({ queryKey: orgKeys.list });
+    },
+  });
+}
+
+export function useLeaveOrgMutation() {
+  const exitWorkspace = useExitWorkspace();
+  return useMutation({ mutationFn: leaveOrg, onSuccess: exitWorkspace });
+}
+
+/** Owner only; `confirmName` must equal the workspace name. Restorable for 30 days. */
+export function useDeleteOrgMutation() {
+  const exitWorkspace = useExitWorkspace();
+  return useMutation({ mutationFn: deleteOrg, onSuccess: exitWorkspace });
+}
+
+/** Owner cancels a pending deletion, then works in that workspace again. */
+export function useRestoreOrgMutation() {
+  const switchOrg = useSwitchOrg();
+  return useMutation({
+    mutationFn: restoreOrg,
+    // Switching resets every workspace query, the workspace list included.
+    onSuccess: (org) => {
+      switchOrg(org.id);
+    },
+  });
+}
+
+/** The requested workspace was deleted by its owner. Branches on status + `details.code`, never on the message. */
+export function isOrgPendingDeletion(error: unknown): boolean {
+  return error instanceof ApiError && error.status === 403 && error.details.code === "org_pending_deletion";
 }
